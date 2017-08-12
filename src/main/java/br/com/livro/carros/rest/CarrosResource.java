@@ -1,7 +1,6 @@
 package br.com.livro.carros.rest;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
 import java.util.List;
@@ -27,6 +26,7 @@ import org.springframework.stereotype.Component;
 import br.com.livro.carros.domain.Carro;
 import br.com.livro.carros.domain.CarroService;
 import br.com.livro.carros.domain.Response;
+import br.com.livro.carros.domain.ResponseWithURL;
 import br.com.livro.carros.domain.UploadService;
 
 
@@ -44,7 +44,7 @@ public class CarrosResource {
 	
 	@POST
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	public Response postFoto(final FormDataMultiPart multiPart) {
+	public ResponseWithURL postFoto(final FormDataMultiPart multiPart) {
 		if (multiPart != null && multiPart.getFields() != null) {
 			Set<String> keys = multiPart.getFields().keySet();
 			
@@ -57,18 +57,17 @@ public class CarrosResource {
 					// Salva o arquivo
 					String fileName = field.getFormDataContentDisposition().getFileName();
 					
-					String path = uploadService.upload(fileName, in);
-					System.out.println("Arquivo: " + path);
-					
-					return Response.Ok("Arquivo recebido com sucesso");
-				} catch (IOException e) {
+					String url = uploadService.upload(fileName, in);
+			
+					return ResponseWithURL.Ok("Arquivo recebido com sucesso", url);
+				} catch (Exception e) {
 					e.printStackTrace();
-					return Response.Error("Erro ao enviar o arquivo.");
+					return ResponseWithURL.Error("Erro ao enviar o arquivo.");
 				}
 			}
 		}
 		
-		return Response.Ok("Requisição inválida.");
+		return ResponseWithURL.Error("Requisição inválida.");
 	}
 	
 	@POST
