@@ -13,6 +13,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 
 import br.com.livro.carros.domain.Carro;
 import br.com.livro.carros.domain.ResponseWithURL;
@@ -22,18 +23,13 @@ import junit.framework.TestCase;
 public class RestTest extends TestCase {
 
 	// URL do web service
-	private final String URL = "http://localhost:8080/carros/rest/";
+	private final String URL = "http://localhost:8080/carros/rest";
 	
-	public void testGetCarroId() {
-		// Cria o cliente da API
-		ClientConfig clientConfig = new ClientConfig();
-		Client client = ClientBuilder.newClient(clientConfig);
-		
-		// Registra o parser com o Google-GSON
-		client.register(GsonMessageBodyHandler.class);
+	public void testGetCarroId() {		
+		Client client = getClient();
 		
 		// Cria a requisição com o "caminho"
-		WebTarget target = client.target(URL).path("carros/1");
+		WebTarget target = client.target(URL).path("/carros/1");
 		
 		// Faz a requisição do tipo GET solicitando um JSON como resposta.
 		Response response = target.request(MediaType.APPLICATION_JSON).get();
@@ -49,22 +45,17 @@ public class RestTest extends TestCase {
 	}
 	
 	public void testDeleteCarroId() {
-		// Cria o cliente da API
-		ClientConfig clientConfig = new ClientConfig();
-		Client client = ClientBuilder.newClient(clientConfig);
-		
-		// Registra o parser com o Google-GSON
-		client.register(GsonMessageBodyHandler.class);
+		Client client = getClient();
 
 		// Cria a requisição com o "caminho"
-		WebTarget target = client .target(URL).path("carros/13");
+		WebTarget target = client.target(URL).path("/carros/32");
 				
 		// O teste de deletar s� funciona se o carro existir, então vamos verificar antes.
 		Response responseGet = target.request(MediaType.APPLICATION_JSON).get();
 		
 		if (responseGet.getStatus() != 200) {
 			// Não deixa prosseguir no teste se o carro não existe
-			System.err.println("Carro para deletr não existe, abortando teste.");
+			System.err.println("Carro para deletar não existe, abortando teste.");
 			return;
 		}
 		
@@ -82,11 +73,9 @@ public class RestTest extends TestCase {
 	}
 	
 	public void testPostFormParams() {
-		ClientConfig clientConfig = new ClientConfig();
-		Client client = ClientBuilder.newClient(clientConfig);
-		client.register(GsonMessageBodyHandler.class);
+		Client client = getClient();
 		
-		// Cria os parâmetros do formuLêrio
+		// Cria os parâmetros do formulário
 		String base64 = Base64.getEncoder().encodeToString("Ricardo Lecheta".getBytes());
 		
 		Form form = new Form();
@@ -94,7 +83,7 @@ public class RestTest extends TestCase {
 		form.param("base64", base64);
 		
 		// Faz a requisição do tipo POST com x-www-form-urlencoded
-		WebTarget target = client.target(URL).path("carros/postFotoBase64");
+		WebTarget target = client.target(URL).path("/carros/postFotoBase64");
 		
 		Entity<Form> entity = Entity.entity(form,MediaType.APPLICATION_FORM_URLENCODED_TYPE);
 		Response response = target.request(MediaType.APPLICATION_JSON).post(entity);
@@ -110,10 +99,7 @@ public class RestTest extends TestCase {
 	}
 
 	public void testSalvarNovoCarro() {
-		ClientConfig clientConfig = new ClientConfig();
-		
-		Client client = ClientBuilder.newClient(clientConfig);
-		client.register(GsonMessageBodyHandler.class);
+		Client client = getClient();
 		
 		// Cria o objeto normalmente.
 		Carro c = new Carro();
@@ -135,7 +121,7 @@ public class RestTest extends TestCase {
 		assertEquals("Carro salvo com sucesso", s.getMsg());
 		
 		// Depois de salvar o carro, vou buscá-lo pelo nome para excluir.
-		target = client.target(URL).path("carros/nome/Novo Carro Teste");
+		target = client.target(URL).path("/carros/nome/Novo Carro Teste");
 		response = target.request(MediaType.APPLICATION_JSON).get();
 		
 		assertEquals(200, response.getStatus());
@@ -149,10 +135,24 @@ public class RestTest extends TestCase {
 		Long id = c.getId();
 
 		// Deleta o carro que foi salvo no teste, para não deixar sujeira a base.
-		target = client .target(URL).path("carros/" + id);
+		target = client .target(URL).path("/carros/" + id);
 		response =  target.request(MediaType.APPLICATION_JSON).delete();
 		
 		assertEquals(200, response.getStatus());
+	}
+	
+	private Client getClient() {
+		// Cria o cliente da API
+		ClientConfig clientConfig = new ClientConfig();
+		Client client = ClientBuilder.newClient(clientConfig);
+		
+		// Autentica o usuário admin
+		client.register(HttpAuthenticationFeature.basic("admin", "admin"));
+		
+		// Registra o parser com o Google-GSON
+		client.register(GsonMessageBodyHandler.class);
+		
+		return client;
 	}
 	
 }

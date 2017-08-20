@@ -15,6 +15,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.io.IOUtils;
@@ -119,6 +120,21 @@ public class CarrosResource {
 		
 		return Response.Error("Requisição inválida.");
 	}
+	
+	@GET
+	@Path("/toBase64/{texto}")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String toBase64(@PathParam("texto") String texto) {
+		return Base64.getEncoder().encodeToString(texto.getBytes());
+	}
+	
+	@GET
+	@Path("/toBase64")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String toBase64ViaQueryParam(@QueryParam("texto") String texto) {
+		return Base64.getEncoder().encodeToString(texto.getBytes());
+	}
+	
 	
 	@GET
 	public List<Carro> get() {
